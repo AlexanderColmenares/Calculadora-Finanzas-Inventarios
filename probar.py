@@ -2,7 +2,7 @@ from numpy import inexact
 from src.database import cargar_datos
 #1
 # importamos la función que creamos en el otro archivo o modulo
-#importamos solo la función
+#importamos solo la funció  n
 def test_conexion():
     print("--- INICIANDO PRUEBA DE CONEXIÓN---")
 #2

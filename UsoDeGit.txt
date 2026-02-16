@@ -1,0 +1,91 @@
+Configuraciones y/o uso de Git y GitHub
+
+las configuraciones de Global se hacen usa sola vez con o sin proyecto pues son Configuraciones
+generales de la aplicación, pero las otras si se hacen y usan siempre y claro depente no se inicia un git init 2 veces en la miisma carpeta o proyecto
+
+
+
+1)Iniciar proyectos: genera carpeta de git donde se guardan las versiones.
+
+Comando:            git init
+-----------------------------------------------------------------------------
+
+2)Configurar el proyecto: agregar tu usuario y tu email.
+Esto va ir emparejado a GitHub tambien asi que por eso email y usar de GitHub
+
+Comando:            git config --global user.email | tu usuario |            
+Comando:            git config --global user.email | Tu email |
+------------------------------------------------------------------------------
+
+3)Cambiar rama por si no sale en la principal que es main:
+Si la rama sale como master la cambiamos( Mover/Renombrar )
+
+Comando:            git branch -m master main
+
+tambien se podria cambiar las configuraciones Globales antes de hacer el init y se soluciona
+
+Comando:            git config --global init.defaultBranch main
+--------------------------------------------------------------------------------
+
+4) Ver el estado del proyecto y cierta información
+
+seguimiento de los archhivos y sus cambios y etc
+Comando:            git status
+
+y otra forma para otras cosas ya hechas historias de versiones, commits, fecha, hora, persona, main y etc.
+Comando:            git log
+------------------------------------------------------------------------------------
+
+5) añadir archivos al proyecto para sus seguimiento y o uso
+
+añadir manual el que quieres
+Comando:            git add tu_archivo.extension
+
+añadir todo dentro de la carpeta/ el punto no es un error es la raiz de todo el proeyecto
+Comando:            git add .
+----------------------------------------------------------------------------------------
+
+6) guardar los cambios en commits de cada version y avance del proyecto o cambio de lo que se hizo eso depende del proeyecto
+al hacer un commit se debe hacer como un correo descriptivo sobre que se hizo y que se toco o 
+archivos y etc para manejar mejor y teenr la gestion mas optima
+pagina de ejemplo
+https://www.conventionalcommits.org/en/v1.0.0/
+"text/refactor ot(archivo modificado) descripcion, -alcance, lineas y todo se dice resolver o x nunca ya se resolvio"
+
+Comando:            git commit -m "Tu_Commit"
+-----------------------------------------------------------------------------------------
+
+7) CUando tienes un error o se te rompe algo y no sabes porque y necesitas volver al commit 
+anterior
+
+Comando: git stash
+------------------------------------------------------------------------------------------
+MANEJO DE /GitHub/ REMOTO
+------------------------------------------------------------------------------------------
+0) Creas tu repositorio web normal y configuras lo que quieras
+
+el .gitignore te ayuda a evitar que se suban configuraciones que puedan afectar a los demas 
+e ignorar archivos
+-------------------------------------------------------------------------------------------
+1) Vincular repositorio local can el web
+¡¡¡¡¡ATENCION!!!!!!!
+antes de subir algo haz un respaldo de lo que ya existe en la web si solo subes y ya existian 
+archivos se borraran por eso arrastramos devuelta lo añadimos git add .  y luego si los subimos con el commit
+
+comando para Vincular
+Comando:          git remote add origin |Tu_url copiada de GitHub en code https|
+-----------------------------------------------------------------------------------------------
+2) moverlo o enviarlo a la rama o variacion de linea de tiempo nueva.
+en este caso rama ya existente
+
+Comando:            git branch -M main
+-----------------------------------------------------------------------------------------------
+3)enviarlo a la web.
+ten en cuenta que ya hayas rescatado lo que sea que exista en la web o si la web esta vacia no 
+te preocupes.
+
+Comando:            git push -u origin main
+----------------------------------------------------------------------------------------------------------
+4) Comando para jalar o descargar
+
+Comando:            git pull origin main
