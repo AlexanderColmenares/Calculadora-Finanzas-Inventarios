@@ -1,0 +1,49 @@
+Python en Linux (Lubuntu)1. Comandos de Gestión del EntornoAcciónComando¿Para qué sirve?
+
+Crear python3.13 -m venv env
+
+Crea la "burbuja" (hazlo solo una vez al iniciar el proyecto).
+
+Activar 
+
+source env/bin/activate
+
+Te "mete" en el entorno (hazlo cada vez que abras la terminal).Desactivar
+ 
+deactivate
+
+Te "saca" de la burbuja y vuelves al Python del sistema.Borrar
+
+rm -rf env
+
+ Borra el entorno por completo si algo sale mal.
+ 
+ 
+ Gestión de Librerías (El "Mago" Pip)AcciónComando¿Para qué sirve?
+ Instalar
+ 
+ 
+ pip install nombre
+ 
+ Instala una librería (ej: customtkinter) dentro del entorno.
+ Ver lista
+ 
+ pip list
+ 
+ Muestra qué tienes instalado en ese momento.
+ ------------------------------------------------------------------------------------------
+ Crear Receta
+ 
+ pip freeze > requirements.txt
+ 
+ Guarda la lista de librerías para llevarlas a otra PC.Instalar Receta
+ ---------------------------------------------------------------------------------------
+ 
+ pip install -r requirements.txt
+ 
+ Instala todo lo de la lista de un solo golpe.
+ 
+ --------------------------------------------------------------------------------------
+pip list --outdated
+
+este te dice que esta desactualizado
