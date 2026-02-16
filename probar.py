@@ -28,6 +28,7 @@ def test_conexion():
             else:
                 print("Elemento no hallado")
                 break
+  
 
         
     else:
@@ -36,6 +37,4 @@ def test_conexion():
 #4
 # Ejecutamos prueba de CONEXIÓN
 if __name__ == "__main__":
-    test_conexion()
-
-
+    test_conexion() 
