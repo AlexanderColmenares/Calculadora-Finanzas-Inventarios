@@ -1,4 +1,5 @@
 from numpy import inexact
+from pandas.core.frame import find_common_type
 from src.database import cargar_datos
 #1
 # importamos la función que creamos en el otro archivo o modulo
@@ -7,7 +8,9 @@ def test_conexion():
     print("--- INICIANDO PRUEBA DE CONEXIÓN---")
 #2
 # Llamaos a la función y guardamos el resultado en 'df'
-    df = cargar_datos()
+ #ahora le damos argumentos pues ya se modifico
+    ruta_archivo = "data/inventario.csv"
+    df = cargar_datos(ruta_archivo)
 
 #3
 #Verificamos si la carga fue exitosa
@@ -18,17 +21,11 @@ def test_conexion():
         print(df) #Esto imprime la tabla de inventario
 
         print("---------------------------------------------------------------------------------------")
-        print(f"Productos encontrados {len(df)}")
-        producto = input("Que producto desea obtenner? fila?")
-        for element in df:
-            if element == producto:
-                print(f"Elemento hallado {element}")
-                
-                break
-            else:
-                print("Elemento no hallado")
-                break
-  
+        print(f"Productos encontrados {len(df)}")         
+       
+        
+
+
 
         
     else:
