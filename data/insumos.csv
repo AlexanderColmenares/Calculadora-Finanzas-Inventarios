@@ -1,0 +1,4 @@
+id_insumo,nombre,tipo,costo_usd,stock_almacen,stok_estante,punto_reorden
+INS-01,Harina Pan,Unidad,1.10,50,10,5
+INS-02,Aceite 1L,Liquido,2.50,20,5,3
+INS-03,Pasta 1KG,Unidad,1.30,30,12,6

@@ -1,37 +1,51 @@
-# Importamos las piezas que ya construimos
-from src.database import cargar_datos
-from src.engine import MotorFinanciero
+from database import Database
+from engine import FinanceEngine
+import pandas as pd
 
 def ejecutar_sistema():
-    print("--- INICIANDO SISTEMA DE GESTIÓN (MVP) ---")
+    print("\n--- 🧮 INICIANDO SISTEMA DE GESTIÓN MATRICIAL ---")
     
-    # 1. CARGA: Usamos tu función de database.py
-    # Asegúrate de que el nombre del archivo coincida con tu CSV en /data
-    ruta_archivo = "data/inventario.csv"
-    datos_crudos = cargar_datos(ruta_archivo)
+    # 1. Inicializar componentes
+    db = Database()
+    engine = FinanceEngine()
     
-    if datos_crudos is not None:
-        # 2. CONSTRUCCIÓN: Creamos el objeto Motor y le pasamos el DataFrame
-        # Aquí es donde ocurre el __init__ y el self guarda los datos
-        motor = MotorFinanciero(datos_crudos)
+    # 2. Cargar datos
+    exito, mensaje = db.cargar_datos()
+    if not exito:
+        print(f"❌ {mensaje}")
+        return
+
+    # 3. Entrada de parámetros (Manual)
+    try:
+        print("\n[CONFIGURACIÓN INICIAL]")
+        tasa = float(input("👉 Ingrese la tasa del dólar (BCV/Paralelo): "))
+        engine.tasa_bcv = tasa
+    except ValueError:
+        print("❌ Error: Debe ingresar un número válido para la tasa.")
+        return
+
+    # 4. Procesamiento
+    print("\n[PROCESANDO MATRICES...]")
+    try:
+        resultado = engine.procesar_inventario(db)
         
-        # 3. PROCESO: El motor ejecuta las 3 funciones base
-        print("Calculando costos, ingresos y utilidad...")
-        resultado = motor.calcular_funciones_base()
+        # 5. Mostrar resultados (Vista previa técnica)
+        print("\n" + "="*60)
+        print(f"{'PRODUCTO':<20} | {'COSTO $':<10} | {'PRECIO $':<10} | {'PRECIO BS':<10}")
+        print("-"*60)
         
-        # 4. ANÁLISIS: El motor evalúa la viabilidad (ROI)
-        resultado_final = motor.analizar_viabilidad()
+        for index, row in resultado.iterrows():
+            nombre = row['nombre']
+            costo = row['costo_total_usd']
+            p_usd = row['precio_venta_usd']
+            p_bs = row['precio_bs']
+            print(f"{nombre:<20} | {costo:>10.2f} | {p_usd:>10.2f} | {p_bs:>10.2f}")
+            
+        print("="*60)
+        print("✅ Cálculo finalizado con éxito.")
         
-        # 5. SALIDA: Mostramos los resultados clave por consola
-        print("\nRESULTADOS FINANCIEROS:")
-        # Solo mostramos las columnas que nos interesan para no saturar la pantalla
-        columnas_vista = ['producto', 'costo_total', 'precio_venta', 'utilidad_neta', 'estatus']
-        print(resultado_final[columnas_vista])
-        
-        print("\n--- PROCESO FINALIZADO CON ÉXITO ---")
-    else:
-        print("No se pudieron cargar los datos. Revisa la ruta del archivo.")
+    except Exception as e:
+        print(f"❌ Error en el motor de cálculo: {e}")
 
 if __name__ == "__main__":
     ejecutar_sistema()
-
