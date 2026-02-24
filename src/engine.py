@@ -1,36 +1,45 @@
-import numpy as np
 import pandas as pd
-from sympy import symbols, diff
+import numpy as np
 
 class FinanceEngine:
     def __init__(self):
-        self.tasa_bcv = 1.0  # Valor por defecto
+        self.tasa_bcv = 300.17
 
-    def procesar_inventario(self, db):
+    def calcular_sensibilidad(self, margen):
+        """Derivada parcial dP/dC = (1 + m)"""
+        return 1.0 + float(margen)
+
+    def procesar_datos(self, db):
         """
-        Calcula costos y precios usando la lógica de matrices.
+        Calcula costos usando el modelo matricial.
+        Operación: C = A.T * Vc (Producto punto de transpuesta por costos)
         """
-        # Obtenemos los datos desde el objeto database
-        df_insumos = db.insumos
-        df_productos = db.productos
-        df_recetas = db.recetas
+        if db.productos.empty or db.insumos.empty or db.recetas.empty:
+            return pd.DataFrame()
 
-        # 1. Calculamos el costo de producción por producto
-        # Combinamos recetas con costos de insumos
-        df_unido = df_recetas.merge(df_insumos[['id_insumo', 'costo_usd']], on='id_insumo')
-        df_unido['costo_parcial'] = df_unido['cantidad_necesaria'] * df_unido['costo_usd']
-        
-        # Agrupamos para tener el costo total por producto final
-        costos_finales = df_unido.groupby('id_producto')['costo_parcial'].sum().reset_index()
-        costos_finales.columns = ['id_producto', 'costo_total_usd']
+        # 1. Mapeo de índices
+        ins_ids = db.insumos['id_insumo'].tolist()
+        prod_ids = db.productos['id_producto'].tolist()
+        ins_idx = {id_ins: i for i, id_ins in enumerate(ins_ids)}
+        prod_idx = {id_prod: j for j, id_prod in enumerate(prod_ids)}
 
-        # 2. Unimos con la tabla de productos para calcular precio de venta
-        resultado = df_productos.merge(costos_finales, on='id_producto')
+        # 2. Matriz de Coeficientes Técnicos (A)
+        A = np.zeros((len(ins_ids), len(prod_ids)))
+        for _, row in db.recetas.iterrows():
+            if row['id_insumo'] in ins_idx and row['id_producto'] in prod_idx:
+                A[ins_idx[row['id_insumo']], prod_idx[row['id_producto']]] = row['cantidad_necesaria']
+
+        # 3. Vector de Costos (Vc)
+        vc = db.insumos['costo_usd'].values
+
+        # 4. Cálculo Matricial
+        costos_array = np.dot(A.T, vc)
+
+        # 5. DataFrame de salida
+        resumen = db.productos.copy()
+        resumen['costo_total_usd'] = costos_array
+        resumen['precio_usd'] = resumen['costo_total_usd'] * (1 + resumen['margen_ganancia_esperado'])
+        resumen['precio_bs'] = resumen['precio_usd'] * self.tasa_bcv
+        resumen['nombre_prod'] = resumen['nombre']
         
-        # Fórmula: Precio = Costo / (1 - Margen)
-        resultado['precio_venta_usd'] = resultado['costo_total_usd'] / (1 - resultado['margen_ganancia_esperado'])
-        
-        # 3. Conversión a Bolívares según la tasa
-        resultado['precio_bs'] = resultado['precio_venta_usd'] * self.tasa_bcv
-        
-        return resultado
+        return resumen

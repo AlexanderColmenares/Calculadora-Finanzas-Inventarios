@@ -1,4 +1,4 @@
 id_producto,nombre,categoria,margen_ganancia_esperado
-PROD-01,Combo Pasta,Alimentos,0.30
-PROD-02,Aceite Detal,Venta Directa,0.20
-PROD-03,Pasta 1KG,Venta Directa,0.30
+PROD-01,Combo Pasta,Alimentos,0.1
+PROD-02,Aceite Detal,Venta Directa,0.2
+PROD-03,Pasta 1KG,Venta Directa,0.3
