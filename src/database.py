@@ -3,26 +3,32 @@ import os
 
 class Database:
     def __init__(self):
-        self.path = "data/"
-        # Inicializamos con DataFrames vacíos en lugar de None
-        # para que el editor no se confunda
+        self.path = "data"
         self.insumos = pd.DataFrame()
         self.productos = pd.DataFrame()
         self.recetas = pd.DataFrame()
+        self.ventas = pd.DataFrame()
+        
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+        self.cargar_datos()
 
     def cargar_datos(self):
-        try:
-            # Agregamos la barra / entre la ruta y el nombre del archivo
-            self.insumos = pd.read_csv(f"{self.path}insumos.csv")
-            self.productos = pd.read_csv(f"{self.path}productos.csv")
-            self.recetas = pd.read_csv(f"{self.path}recetas.csv")
-            return True, "Sincronización exitosa."
-        except Exception as e:
-            return False, f"Error al cargar: {str(e)}"
+        archivos = {
+            'insumos': ['id_insumo', 'nombre', 'costo_usd', 'stock_almacen', 'stock_estante', 'punto_reorden'],
+            'productos': ['id_producto', 'nombre', 'categoria', 'margen_ganancia_esperado', 'tipo'],
+            'recetas': ['id_producto', 'id_insumo', 'cantidad_necesaria'],
+            'ventas': ['fecha', 'id_producto', 'cantidad', 'precio_bs_dia', 'tasa_dia', 'utilidad_usd']
+        }
+        for nombre, columnas in archivos.items():
+            file_path = os.path.join(self.path, f"{nombre}.csv")
+            if os.path.exists(file_path):
+                setattr(self, nombre, pd.read_csv(file_path))
+            else:
+                setattr(self, nombre, pd.DataFrame(columns=columnas))
 
-    def guardar_insumos(self):
-        # Ahora el editor sabrá que self.insumos es un DataFrame
-        if not self.insumos.empty:
-            self.insumos.to_csv(f"{self.path}insumos.csv", index=False)
-            return True
-        return False
+    def guardar_todo(self):
+        self.insumos.to_csv(os.path.join(self.path, "insumos.csv"), index=False)
+        self.productos.to_csv(os.path.join(self.path, "productos.csv"), index=False)
+        self.recetas.to_csv(os.path.join(self.path, "recetas.csv"), index=False)
+        self.ventas.to_csv(os.path.join(self.path, "ventas.csv"), index=False)

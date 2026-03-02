@@ -1,4 +1,6 @@
-id_producto,nombre,categoria,margen_ganancia_esperado
-PROD-01,Combo Pasta,Alimentos,0.1
-PROD-02,Aceite Detal,Venta Directa,0.2
-PROD-03,Pasta 1KG,Venta Directa,0.3
+id_producto,nombre,categoria,margen_ganancia_esperado,tipo
+PROD-01,Combo Pasta,Alimentos,0.3,Combo
+PROD-02,Aceite Detal,Venta Directa,0.2,Unitario
+PROD-03,Pasta Individual,Alimentos,0.25,Unitario
+PROD-04,Arroz Premium,Alimentos,0.15,Unitario
+PROD-05,Queso Santony 156G,General,0.3,Unitario

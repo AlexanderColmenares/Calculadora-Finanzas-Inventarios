@@ -4,40 +4,62 @@ import sympy as sp
 
 class FinanceEngine:
     def __init__(self):
-        self.tasa_bcv = 36.50  # Valor referencial ajustable
-        # Configuración simbólica con SymPy para el rigor académico
+        self.tasa_bcv = 36.50  
         self.C, self.m = sp.symbols('C m')
-        self.formula_precio = self.C * (1 + self.m)
+        self.formula_utilidad = self.C * self.m
 
-    def obtener_sensibilidad(self):
-        """Calcula dP/dC: cuánto varía el precio ante un cambio en el costo."""
-        return sp.diff(self.formula_precio, self.C)
+    def obtener_analisis_completo(self, p):
+        try:
+            m_val = float(p['margen_ganancia_esperado'])
+            c_val = float(p['costo_usd'])
+            derivada_f = sp.diff(self.formula_utilidad, self.C)
+            sensibilidad = float(derivada_f.subs(self.m, m_val))
+            
+            return {
+                'utilidad_unitaria': c_val * m_val,
+                'sensibilidad_utilidad': sensibilidad,
+                'formula_u': "U(C) = C * m"
+            }
+        except:
+            return {'utilidad_unitaria': 0.0, 'sensibilidad_utilidad': 0.0, 'formula_u': "N/A"}
+
+    def obtener_receta_detalle(self, id_prod, db):
+        detalles = []
+        receta = db.recetas[db.recetas['id_producto'] == id_prod]
+        for _, r in receta.iterrows():
+            ins_info = db.insumos[db.insumos['id_insumo'] == r['id_insumo']]
+            if not ins_info.empty:
+                ins = ins_info.iloc[0]
+                detalles.append({
+                    'nom': ins['nombre'],
+                    'cant': r['cantidad_necesaria'],
+                    'sub': float(r['cantidad_necesaria'] * ins['costo_usd'])
+                })
+        return detalles
 
     def procesar_datos(self, db):
         if db.productos.empty or db.insumos.empty or db.recetas.empty:
             return pd.DataFrame()
 
-        # --- LÓGICA DE ÁLGEBRA LINEAL CON NUMPY ---
-        # Creamos mapeos para los índices de la matriz
         ins_map = {id_ins: i for i, id_ins in enumerate(db.insumos['id_insumo'])}
         prod_map = {id_prod: j for j, id_prod in enumerate(db.productos['id_producto'])}
 
-        # Matriz de Requerimientos Técnicos A (Insumos x Productos)
+        # Matriz A de requerimientos técnicos
         A = np.zeros((len(db.insumos), len(db.productos)))
         for _, row in db.recetas.iterrows():
             if row['id_insumo'] in ins_map and row['id_producto'] in prod_map:
                 A[ins_map[row['id_insumo']], prod_map[row['id_producto']]] = row['cantidad_necesaria']
 
-        # Vector de costos unitarios de insumos
+        # Vector v de costos unitarios
         v_costos = db.insumos['costo_usd'].values
-
-        # Cálculo matricial: c = v_costos . A (Suma ponderada de insumos por producto)
+        
+        # Producto Matricial: costos = v . A
         costos_totales = np.dot(v_costos, A)
 
-        # Construcción del DataFrame de salida
         resumen = db.productos.copy()
-        resumen['costo_total_usd'] = costos_totales
-        resumen['precio_usd'] = resumen['costo_total_usd'] * (1 + resumen['margen_ganancia_esperado'])
-        resumen['precio_bs'] = resumen['precio_usd'] * self.tasa_bcv
-        
+        resumen['costo_usd'] = costos_totales
+        resumen['precio_bs'] = resumen.apply(
+            lambda x: float((x['costo_usd'] * (1 + x['margen_ganancia_esperado'])) * self.tasa_bcv), 
+            axis=1
+        )
         return resumen
