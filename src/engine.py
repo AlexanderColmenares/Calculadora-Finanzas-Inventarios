@@ -13,53 +13,36 @@ class FinanceEngine:
             m_val = float(p['margen_ganancia_esperado'])
             c_val = float(p['costo_usd'])
             derivada_f = sp.diff(self.formula_utilidad, self.C)
-            sensibilidad = float(derivada_f.subs(self.m, m_val))
-            
-            return {
-                'utilidad_unitaria': c_val * m_val,
-                'sensibilidad_utilidad': sensibilidad,
-                'formula_u': "U(C) = C * m"
-            }
+            # Corrección: Evaluación explícita a float
+            sensibilidad = float(derivada_f.evalf(subs={self.m: m_val}))
+            return {'utilidad_unitaria': c_val * m_val, 'sensibilidad_utilidad': sensibilidad}
         except:
-            return {'utilidad_unitaria': 0.0, 'sensibilidad_utilidad': 0.0, 'formula_u': "N/A"}
+            return {'utilidad_unitaria': 0.0, 'sensibilidad_utilidad': 0.0}
+
+    def procesar_datos(self, db):
+        if db.productos.empty or db.insumos.empty: return pd.DataFrame()
+        
+        # Producto Punto Matricial para Costos
+        ins_map = {id_ins: i for i, id_ins in enumerate(db.insumos['id_insumo'])}
+        prod_map = {id_prod: j for j, id_prod in enumerate(db.productos['id_producto'])}
+        A = np.zeros((len(db.insumos), len(db.productos)))
+        
+        for _, row in db.recetas.iterrows():
+            if row['id_insumo'] in ins_map and row['id_producto'] in prod_map:
+                A[ins_map[row['id_insumo']], prod_map[row['id_producto']]] = row['cantidad_necesaria']
+        
+        v_costos = db.insumos['costo_usd'].values.astype(float)
+        costos_totales = np.dot(v_costos, A)
+
+        resumen = db.productos.copy()
+        resumen['costo_usd'] = costos_totales
+        resumen['precio_bs'] = (resumen['costo_usd'] * (1 + resumen['margen_ganancia_esperado'])) * self.tasa_bcv
+        return resumen
 
     def obtener_receta_detalle(self, id_prod, db):
         detalles = []
         receta = db.recetas[db.recetas['id_producto'] == id_prod]
         for _, r in receta.iterrows():
-            ins_info = db.insumos[db.insumos['id_insumo'] == r['id_insumo']]
-            if not ins_info.empty:
-                ins = ins_info.iloc[0]
-                detalles.append({
-                    'nom': ins['nombre'],
-                    'cant': r['cantidad_necesaria'],
-                    'sub': float(r['cantidad_necesaria'] * ins['costo_usd'])
-                })
+            ins = db.insumos[db.insumos['id_insumo'] == r['id_insumo']].iloc[0]
+            detalles.append({'nom': ins['nombre'], 'cant': r['cantidad_necesaria'], 'sub': float(r['cantidad_necesaria'] * ins['costo_usd'])})
         return detalles
-
-    def procesar_datos(self, db):
-        if db.productos.empty or db.insumos.empty or db.recetas.empty:
-            return pd.DataFrame()
-
-        ins_map = {id_ins: i for i, id_ins in enumerate(db.insumos['id_insumo'])}
-        prod_map = {id_prod: j for j, id_prod in enumerate(db.productos['id_producto'])}
-
-        # Matriz A de requerimientos técnicos
-        A = np.zeros((len(db.insumos), len(db.productos)))
-        for _, row in db.recetas.iterrows():
-            if row['id_insumo'] in ins_map and row['id_producto'] in prod_map:
-                A[ins_map[row['id_insumo']], prod_map[row['id_producto']]] = row['cantidad_necesaria']
-
-        # Vector v de costos unitarios
-        v_costos = db.insumos['costo_usd'].values
-        
-        # Producto Matricial: costos = v . A
-        costos_totales = np.dot(v_costos, A)
-
-        resumen = db.productos.copy()
-        resumen['costo_usd'] = costos_totales
-        resumen['precio_bs'] = resumen.apply(
-            lambda x: float((x['costo_usd'] * (1 + x['margen_ganancia_esperado'])) * self.tasa_bcv), 
-            axis=1
-        )
-        return resumen

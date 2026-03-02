@@ -13,7 +13,7 @@ class Controller:
         self.engine = FinanceEngine()
         self.ui = UserInterface()
         self.idx = 0
-        self.vista = "inicio" # inicio, historial, inventario
+        self.vista = "inicio"
 
     def _get_key(self):
         fd = sys.stdin.fileno(); old = termios.tcgetattr(fd)
@@ -27,88 +27,67 @@ class Controller:
         while True:
             df = self.engine.procesar_datos(self.db)
             os.system('clear')
-            layout = self.ui.layout_base()
-            layout["header"].update(self.ui.generar_header(self.db, self.engine.tasa_bcv))
+            layout = self.ui.generar_layout(self.vista)
+            layout["header"].update(self.ui.generar_header(self.db, self.engine.tasa_bcv, self.vista))
 
-            if self.vista == "inicio" and not df.empty:
-                p = df.iloc[self.idx]
-                calc = self.engine.obtener_analisis_completo(p)
-                receta = self.engine.obtener_receta_detalle(p['id_producto'], self.db)
-                layout["izquierda"].update(self.ui.generar_tabla_productos(df, self.idx))
-                layout["derecha"].update(self.ui.panel_analisis(p, calc, receta, self.db))
-            
+            if self.vista == "inicio":
+                if not df.empty:
+                    p = df.iloc[self.idx]
+                    calc = self.engine.obtener_analisis_completo(p)
+                    receta = self.engine.obtener_receta_detalle(p['id_producto'], self.db)
+                    layout["izquierda"].update(self.ui.generar_tabla_productos(df, self.idx))
+                    layout["derecha"].update(self.ui.panel_analisis(p, calc, receta, self.db))
+            elif self.vista == "insumos":
+                layout["main"].update(self.ui.generar_vista_insumos(self.db))
             elif self.vista == "historial":
-                layout["main"].update(Panel(str(self.db.ventas.tail(15)), title="HISTORIAL DE VENTAS"))
+                layout["main"].update(self.ui.generar_vista_historial(self.db))
 
-            layout["footer"].update(Panel("[↑↓] Navegar | [V] Vender | [N] Nuevo | [H] Historial | [T] Tasa | [Q] Salir"))
+            layout["footer"].update(Panel("[1] Inicio | [2] Insumos | [3] Historial | [I] +Insumo | [V] Vender | [T] Tasa | [Q] Salir"))
             self.ui.console.print(layout)
 
             key = self._get_key()
             if key == 'q': break
-            elif key == '\x1b[A': self.idx = max(0, self.idx - 1)
-            elif key == '\x1b[B': self.idx = min(len(df)-1, self.idx + 1)
-            elif key == 'h': self.vista = "historial" if self.vista != "historial" else "inicio"
+            elif key == '1': self.vista = "inicio"
+            elif key == '2': self.vista = "insumos"
+            elif key == '3': self.vista = "historial"
+            elif key == 'i': self.crear_insumo()
             elif key == 't': self.cambiar_tasa()
-            elif key == 'n': self.crear_producto()
-            elif key == 'v': self.registrar_venta(df.iloc[self.idx])
+            elif key == 'v' and self.vista == "inicio": self.registrar_venta(df.iloc[self.idx])
+            elif key == '\x1b[A' and self.vista == "inicio": self.idx = max(0, self.idx - 1)
+            elif key == '\x1b[B' and self.vista == "inicio": self.idx = min(len(df)-1, self.idx + 1)
 
-    def cambiar_tasa(self):
+    def crear_insumo(self):
         os.system('clear')
         try:
-            nueva = float(input("Ingrese nueva tasa BCV (Bs/$): "))
-            self.engine.tasa_bcv = nueva
-        except: print("Valor inválido.")
-
-    def crear_producto(self):
-        os.system('clear')
-        print("--- REGISTRO DE NUEVO PRODUCTO ---")
-        try:
+            print("--- REGISTRO DE INSUMO ---")
             nom = input("Nombre: ")
-            margen = float(input("Margen (ej: 0.3 para 30%): "))
-            tipo = input("Tipo (Unitario/Combo): ")
-            id_p = f"PROD-{len(self.db.productos)+1:02d}"
-            
-            nueva_fila = pd.DataFrame([{'id_producto': id_p, 'nombre': nom, 'categoria': 'General', 'margen_ganancia_esperado': margen, 'tipo': tipo}])
-            self.db.productos = pd.concat([self.db.productos, nueva_fila], ignore_index=True)
-            
-            print("\nAsignación de Insumos (escriba 'fin' para terminar):")
-            while True:
-                print(self.db.insumos[['id_insumo', 'nombre']])
-                id_i = input("ID del Insumo: ").upper()
-                if id_i == 'FIN' or id_i == '': break
-                cant = float(input(f"Cantidad de {id_i}: "))
-                rec_fila = pd.DataFrame([{'id_producto': id_p, 'id_insumo': id_i, 'cantidad_necesaria': cant}])
-                self.db.recetas = pd.concat([self.db.recetas, rec_fila], ignore_index=True)
-            
+            costo = float(input("Costo USD: "))
+            stock = int(input("Stock: "))
+            id_i = f"INS-{len(self.db.insumos)+1:02d}"
+            nuevo = pd.DataFrame([{'id_insumo': id_i, 'nombre': nom, 'costo_usd': costo, 'stock_almacen': stock, 'stock_estante': 0, 'punto_reorden': 5}])
+            self.db.insumos = pd.concat([self.db.insumos, nuevo], ignore_index=True)
             self.db.guardar_todo()
-            print("✅ Guardado con éxito.")
-        except Exception as e: print(f"❌ Error: {e}")
-        os.system('sleep 2')
+            print("✅ Insumo guardado.")
+        except: print("❌ Datos erróneos.")
+        os.system('sleep 1')
 
     def registrar_venta(self, p):
         os.system('clear')
         try:
-            cant = float(input(f"¿Cuántas unidades de {p['nombre']} vendió?: "))
-            # Lógica de Descuento de Inventario por Receta
-            receta = self.db.recetas[self.db.recetas['id_producto'] == p['id_producto']]
-            for _, r in receta.iterrows():
-                self.db.insumos.loc[self.db.insumos['id_insumo'] == r['id_insumo'], 'stock_estante'] -= (r['cantidad_necesaria'] * cant)
-            
+            cant = float(input(f"Cantidad de {p['nombre']}: "))
             utilidad = ((p['precio_bs']/self.engine.tasa_bcv) - p['costo_usd']) * cant
-            venta = pd.DataFrame([{
-                'fecha': datetime.now().strftime("%Y-%m-%d %H:%M"),
-                'id_producto': p['id_producto'],
-                'cantidad': cant,
-                'precio_bs_dia': p['precio_bs'],
-                'tasa_dia': self.engine.tasa_bcv,
-                'utilidad_usd': utilidad
-            }])
+            venta = pd.DataFrame([{'fecha': datetime.now().strftime("%H:%M"), 'id_producto': p['id_producto'], 'cantidad': cant, 'utilidad_usd': utilidad}])
             self.db.ventas = pd.concat([self.db.ventas, venta], ignore_index=True)
             self.db.guardar_todo()
-            print("✅ Venta y Descuento de Stock procesados.")
-        except: print("❌ Error en datos.")
+            print("✅ Venta registrada.")
+        except: pass
         os.system('sleep 1')
 
+    def cambiar_tasa(self):
+        os.system('clear')
+        try:
+            self.engine.tasa_bcv = float(input("Nueva tasa: "))
+        except: pass
+
 if __name__ == "__main__":
-    app = Controller()
-    app.ejecutar()
+    Controller().ejecutar()

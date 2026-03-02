@@ -89,3 +89,56 @@ Comando:            git push -u origin main
 4) Comando para jalar o descargar
 
 Comando:            git pull origin main
+----------------------------------------------------------------------------------------------------------
+Comandos de Ramificación (Git Branching)
+
+1. Listar ramificaciones locales
+git branch
+Utilidad: Permite visualizar todas las ramas existentes en su repositorio local. La rama activa se identifica con un asterisco.
+
+2. Crear una nueva rama
+git branch nombre-de-la-rama
+Utilidad: Genera un nuevo puntero de desarrollo independiente del tronco principal.
+
+3. Cambiar a una rama específica
+git checkout nombre-de-la-rama
+Utilidad: Desplaza su entorno de trabajo hacia la rama indicada. (En versiones modernas de Git, puede utilizar de forma equivalente: git switch nombre-de-la-rama).
+
+4. Crear y cambiar de rama en un solo paso
+git checkout -b nombre-de-la-rama
+Utilidad: Optimiza el flujo de trabajo al crear la bifurcación y posicionarlo en ella inmediatamente.
+
+5. Fusionar cambios (Merge)
+git merge nombre-de-la-rama
+Utilidad: Integra el historial y los cambios de la rama indicada dentro de la rama en la que se encuentra actualmente (usualmente main).
+--------------------------------------------------------------------------------------------------------------------------------
+Protocolo de Vinculación y Envío (Push)
+
+1. Vincular el repositorio local con GitHub
+Si aún no ha conectado su proyecto local con el remoto, ejecute el siguiente comando (sustituyendo la URL por la de su repositorio):
+git remote add origin https://github.com/usuario/repositorio.git
+
+2. Verificar la conexión remota
+git remote -v
+Utilidad: Confirma que las direcciones de envío (fetch y push) estén correctamente configuradas hacia GitHub.
+
+3. Preparar los cambios para el envío
+Recuerde que Git solo sube aquello que ha sido previamente confirmado:
+git add .
+
+4. Consolidar los cambios localmente
+git commit -m "Implementación técnica en la nueva rama"
+
+5. Subir la nueva rama a GitHub
+Para enviar una rama que no existe todavía en el servidor de GitHub, debe utilizar el parámetro de rastreo (upstream):
+git push -u origin nombre-de-la-rama
+
+    Nota Técnica: El parámetro -u (o --set-upstream) vincula su rama local con la rama remota. Una vez ejecutado este comando por primera vez, en el futuro solo necesitará escribir git push mientras se encuentre en esa rama.
+    --------------------------------------------------------------------------------------------------------------------------
+    3. Descartar cambios no deseados en un archivo
+git checkout -- nombre-del-archivo
+Utilidad: Revierte un archivo específico a su último estado confirmado, eliminando las modificaciones locales que aún no han sido procesadas.
+
+4. Renombrar una rama local
+git branch -m nuevo-nombre
+Utilidad: Permite corregir el nombre de la rama en la que se encuentra posicionado actualmente sin afectar la integridad de los commits.
