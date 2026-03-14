@@ -94,19 +94,71 @@ class Controller:
 
     def crear_nuevo(self):
         os.system('clear')
-        print("--- CREAR REGISTROS ---")
+        print("--- 🏗️ CREAR NUEVOS REGISTROS ---")
         print("[1] Nuevo Insumo | [2] Nuevo Producto")
         opt = input("Selección: ")
         try:
             if opt == '1':
-                nombre = input("Nombre: ")
-                costo = float(input("Costo $: "))
-                reorden = float(input("Punto Reorden: "))
-                nuevo = {'id_insumo': f"INS-0{len(self.db.insumos)+1}", 'nombre': nombre, 'costo_usd': costo, 
-                         'stock_almacen': 0, 'stock_estante': 0, 'punto_reorden': reorden}
+                nombre = input("Nombre del Insumo: ")
+                costo = float(input("Costo unitario ($): "))
+                reorden = float(input("Punto de Reorden (mínimo): "))
+                nuevo_id = f"INS-0{len(self.db.insumos)+1}"
+                nuevo = {
+                    'id_insumo': nuevo_id, 
+                    'nombre': nombre, 
+                    'costo_usd': costo, 
+                    'stock_almacen': 0, 
+                    'stock_estante': 0, 
+                    'punto_reorden': reorden
+                }
                 self.db.insumos = pd.concat([self.db.insumos, pd.DataFrame([nuevo])], ignore_index=True)
+                print(f"✅ Insumo {nuevo_id} creado con éxito.")
+
+            elif opt == '2':
+                if self.db.insumos.empty:
+                    print("❌ No hay insumos registrados. Cree un insumo primero.")
+                    os.system('sleep 2'); return
+
+                nombre_p = input("Nombre del Producto: ")
+                categoria = input("Categoría (ej: Alimentos): ")
+                margen = float(input("Margen de ganancia (ej: 0.30 para 30%): "))
+                tipo = input("Tipo (Unitario/Combo): ")
+                
+                prod_id = f"PROD-0{len(self.db.productos)+1}"
+                
+                # Definir Receta (Relación de Insumos)
+                print("\n--- Definición de Receta ---")
+                for i, r in self.db.insumos.iterrows():
+                    print(f"[{i}] {r['nombre']}")
+                
+                indices = input("Ingrese índices de insumos usados (separados por coma, ej: 0,2): ")
+                for idx_str in indices.split(','):
+                    idx = int(idx_str.strip())
+                    cant_n = float(input(f"Cantidad necesaria de {self.db.insumos.at[idx, 'nombre']}: "))
+                    nueva_receta = {
+                        'id_producto': prod_id,
+                        'id_insumo': self.db.insumos.at[idx, 'id_insumo'],
+                        'cantidad_necesaria': cant_n
+                    }
+                    self.db.recetas = pd.concat([self.db.recetas, pd.DataFrame([nueva_receta])], ignore_index=True)
+
+                # Guardar Producto
+                nuevo_p = {
+                    'id_producto': prod_id, 
+                    'nombre': nombre_p, 
+                    'categoria': categoria, 
+                    'margen_ganancia_esperado': margen, 
+                    'tipo': tipo
+                }
+                self.db.productos = pd.concat([self.db.productos, pd.DataFrame([nuevo_p])], ignore_index=True)
+                print(f"✅ Producto {prod_id} y su receta han sido registrados.")
+
             self.db.guardar_todo()
-        except: pass
+        except Exception as e:
+            print(f"❌ Error en la creación: {e}")
+        
+        print("\nPresione cualquier tecla para continuar...")
+        self._get_key()
 
     def registrar_venta(self, p):
         os.system('clear')

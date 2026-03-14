@@ -30,7 +30,7 @@ class UserInterface:
             ventas_hoy = db.ventas[db.ventas['fecha'].str.contains(hoy)]
             ganancia_dia = ventas_hoy['utilidad_usd'].sum()
             
-        return Panel(Align.center(f"🏢 BUSINESS INTELLIGENCE | {vista.upper()} | TASA: {tasa} Bs/$ | [bold green]GANANCIA HOY: ${ganancia_dia:.2f}[/bold green]"), style="bold white on blue")
+        return Panel(Align.center(f"🏢 CALCULADORA DE FINANZAS Y GESTOR DE INVENTARIOS | {vista.upper()} | TASA: {tasa} Bs/$ | [bold green]GANANCIA HOY: ${ganancia_dia:.2f}[/bold green]"), style="bold white on blue")
 
     def generar_tabla_productos(self, df, seleccionado, tasa):
         tabla = Table(title="📦 CATÁLOGO DE PRODUCTOS", expand=True, border_style="cyan")
