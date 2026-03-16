@@ -5,7 +5,7 @@ from rich.panel import Panel
 from database import Database
 from engine import FinanceEngine
 from ui import UserInterface
-from analytics import AnalyticsEngine
+from analytics import AnalyticsEngine  # <--- Nuevo
 from reports import ReportGenerator
 
 # --- LÓGICA DE PORTABILIDAD DE SISTEMA ---
@@ -21,8 +21,8 @@ class Controller:
         self.ui = UserInterface()
         self.idx = 0
         self.vista = "inicio"
-        self.analytics = AnalyticsEngine()
-        self.reporter = ReportGenerator()
+        self.analytics = AnalyticsEngine() # <--- Nuevo
+        self.reporter = ReportGenerator()   # <--- Nuevo
 
     def _get_key(self):
         """Captura teclado sin interrumpir el flujo, compatible con Windows y Linux."""
@@ -214,22 +214,46 @@ class Controller:
         self._get_key()
 
     def generar_reporte_avanzado(self, p):
-        # 1. Obtener datos históricos del producto
+        # 1. Filtramos historial por producto
         historial = self.db.ventas[self.db.ventas['id_producto'] == p['id_producto']]
+        
         if historial.empty:
-            print("No hay ventas para este producto aún.")
+            self.ui.console.print("\n[bold red]❌ Error: No hay datos de ventas para este análisis.[/bold red]")
+            input("Presione Enter para continuar...")
             return
 
-        # 2. Cálculos de ingeniería
-        stats = self.analytics.obtener_puntos_criticos(historial)
-        sens_tasa = self.analytics.calcular_sensibilidad_tasa(p['costo_reposicion_usd'], p['margen_ganancia_esperado'])
-        
-        # 3. Generar PDF
-        grafica = self.reporter.crear_grafica_tendencia(historial, p['nombre'])
-        pdf = self.reporter.generar_pdf(p['nombre'], stats, {'sens_tasa': sens_tasa}, grafica)
-        
-        print(f"✅ Reporte generado: {pdf}")
+        try:
+            # 2. Motor de cálculo (analytics.py)
+            metricas = self.analytics.calcular_metricas_avanzadas(historial, p)
+            
+            # 3. Generación Visual (reports.py)
+            path_grafica = self.reporter.generar_grafica_profesional(historial, metricas, p['nombre'])
+            archivo = self.reporter.generar_pdf_avanzado(p, metricas, path_grafica)
+            
+            self.ui.console.print(f"\n[bold green]✅ Auditoría finalizada:[/bold green] {archivo}")
+        except Exception as e:
+            self.ui.console.print(f"\n[bold red]❌ Error generando reporte: {e}[/bold red]")
+            
         input("Presione Enter para continuar...")
+
+    def ejecutar_auditoria_completa(self):
+        p = self.db.productos.iloc[self.idx]
+        # 1. Filtramos historial por fecha y producto
+        historial = self.db.ventas[self.db.ventas['id_producto'] == p['id_producto']]
+        
+        if historial.empty:
+            self.ui.console.print("[bold red]Error: No hay datos de ventas para este análisis.[/bold red]")
+            return
+
+        # 2. Motor de cálculo
+        metricas = self.analytics.calcular_metricas_avanzadas(historial, p)
+        
+        # 3. Generación Visual
+        path_grafica = self.reporter.generar_grafica_profesional(historial, metricas, p['nombre'])
+        archivo = self.reporter.generar_pdf_avanzado(p, metricas, path_grafica)
+        
+        self.ui.console.print(f"\n[bold green]✅ Auditoría finalizada:[/bold green] {archivo}")
+        input("Presione Enter para volver...")
 
 if __name__ == "__main__":
     Controller().ejecutar()
