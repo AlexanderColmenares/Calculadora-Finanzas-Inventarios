@@ -68,7 +68,7 @@ class Controller:
             elif self.vista == "historial":
                 layout["main"].update(self.ui.generar_vista_historial(self.db))
 
-            layout["footer"].update(Panel("[1] Inicio [2] Insumos [3] Historial | [V] Vender [R] Reabastecer | [M] Modificar [C] Crear [T] Tasa | [Q] Salir"))
+            layout["footer"].update(Panel("[1] Inicio [2] Insumos [3] Historial | [V] Vender [R] Reabastecer | [M] Modificar [C] Crear [T] Tasa | [K] Reporte | [Q] Salir"))
             self.ui.console.print(layout)
 
             key = self._get_key()
@@ -214,28 +214,29 @@ class Controller:
         self._get_key()
 
     def generar_reporte_avanzado(self, p):
-        # 1. Filtramos historial por producto
-        historial = self.db.ventas[self.db.ventas['id_producto'] == p['id_producto']]
-        
-        if historial.empty:
-            self.ui.console.print("\n[bold red]❌ Error: No hay datos de ventas para este análisis.[/bold red]")
-            input("Presione Enter para continuar...")
-            return
-
+        self.ui.console.clear()
         try:
-            # 2. Motor de cálculo (analytics.py)
+            # 1. Obtener datos
+            historial = self.db.ventas[self.db.ventas['id_producto'] == p['id_producto']]
+            
+            if historial.empty:
+                self.ui.console.print("[bold red]❌ No hay ventas registradas para este producto.[/bold red]")
+                input("\nPresione Enter para continuar...")
+                return
+
+            # 2. Procesar métricas
             metricas = self.analytics.calcular_metricas_avanzadas(historial, p)
             
-            # 3. Generación Visual (reports.py)
-            path_grafica = self.reporter.generar_grafica_profesional(historial, metricas, p['nombre'])
-            archivo = self.reporter.generar_pdf_avanzado(p, metricas, path_grafica)
+            # 3. Generar archivos (La clave está en capturar la ruta)
+            ruta_img = self.reporter.generar_grafica_profesional(historial, metricas, p['nombre'])
+            nombre_pdf = self.reporter.generar_pdf_avanzado(p, metricas, ruta_img)
             
-            self.ui.console.print(f"\n[bold green]✅ Auditoría finalizada:[/bold green] {archivo}")
+            self.ui.console.print(Panel(f"✅ [bold green]Reporte generado:[/bold green]\n{nombre_pdf}", border_style="green"))
+            
         except Exception as e:
-            self.ui.console.print(f"\n[bold red]❌ Error generando reporte: {e}[/bold red]")
+            self.ui.console.print(f"[bold red]❌ Error en el proceso: {e}[/bold red]")
             
-        input("Presione Enter para continuar...")
-
+        input("\nPresione Enter para continuar...")
     def ejecutar_auditoria_completa(self):
         p = self.db.productos.iloc[self.idx]
         # 1. Filtramos historial por fecha y producto

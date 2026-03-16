@@ -1,0 +1,18 @@
+#Igonerar carpeta completa
+reports/
+
+#Ignorar archivo especifico
+archivo_secreto.txt
+
+#igonorar todod los archivos con ciertas extensiones
+*.log
+*.temp
+
+#Ignorar archivo en rutas especificas
+
+reports/report_viz.pmg
+
+
+# si ya un arrchivo fue rastreado por git al añadirlo al git ignore no lo eliminina  debera removerlo desde el indice con el comando
+#   git rm --cached <archivo>
+#nota no se colocan estos signos < >
